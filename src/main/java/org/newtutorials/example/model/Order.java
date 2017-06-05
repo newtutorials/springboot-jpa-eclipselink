@@ -15,11 +15,14 @@ public class Order {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name="CUSTOMER_ID", referencedColumnName="id")
+    @JoinColumn(name="CUSTOMER_ID")
     private Customer customer;
 
     @Column(name = "ORDER_NAME", length = 128)
     private String orderName;
+
+    @Version
+    private Long version;
 
     public Order() {
     }
@@ -58,6 +61,7 @@ public class Order {
         return "Order{" +
                 "id=" + id +
                 ", orderName='" + orderName + '\'' +
+                ", version=" + version +
                 '}';
     }
 }

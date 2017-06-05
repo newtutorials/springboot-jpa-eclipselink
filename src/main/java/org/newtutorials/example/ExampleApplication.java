@@ -2,6 +2,7 @@ package org.newtutorials.example;
 
 import org.newtutorials.example.model.Customer;
 import org.newtutorials.example.model.Order;
+import org.newtutorials.example.repository.CustomerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -26,7 +27,7 @@ import java.util.Map;
  * Created by dani on 25/05/2017.
  */
 @SpringBootApplication
-@EnableTransactionManagement
+//@EnableTransactionManagement
 public class ExampleApplication extends JpaBaseConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ExampleApplication.class);
@@ -42,6 +43,7 @@ public class ExampleApplication extends JpaBaseConfiguration {
 
     @Override
     protected Map<String, Object> getVendorProperties() {
+        // Turn off dynamic weaving to disable LTW lookup in static weaving mode
         return Collections.singletonMap("eclipselink.weaving", "false");
     }
 
@@ -50,15 +52,35 @@ public class ExampleApplication extends JpaBaseConfiguration {
     }
 
     @Bean
-    public CommandLineRunner exampleRunner(CustomerService customerService) {
+    public CommandLineRunner exampleRunner(CustomerRepository customerRepository) {
         return (args) -> {
             Customer customer = new Customer("Customer 1", new ArrayList<>());
             customer.getOrders().add(new Order(customer, "order 1"));
             customer.getOrders().add(new Order(customer, "order 2"));
-            customerService.save(customer);
-            customerService.findAll().forEach(c -> {
+            customerRepository.save(customer);
+
+            customerRepository.findAll().forEach(c -> {
                 logger.info(c.toString());
             });
+
+            final Iterable<Customer> customers = customerRepository.findAll();
+            customers.forEach(c -> {
+                c.getOrders().forEach(order -> {
+                    order.setOrderName(order.getOrderName() + "1");
+                });
+                customerRepository.save(c);
+            });
+
+            customerRepository.findAll().forEach(c -> {
+                logger.info(c.toString());
+            });
+            customer = customerRepository.findOne(customer.getId());
+            customer.setName(customer.getName() + "1");
+            customerRepository.save(customer);
+            customerRepository.findAll().forEach(c -> {
+                logger.info(c.toString());
+            });
+
         };
     }
 }
